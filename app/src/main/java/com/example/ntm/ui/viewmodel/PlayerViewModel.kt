@@ -2,10 +2,12 @@ package com.example.ntm.ui.viewmodel
 
 import android.app.Application
 import android.content.ComponentName
+import android.net.Uri
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -17,8 +19,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 
-// ВАЖНО: Класс PlayerState должен быть здесь
 data class PlayerState(
     val currentTrack: UiTrack? = null,
     val queue: List<UiTrack> = emptyList(),
@@ -42,7 +44,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         )
         controllerFuture = MediaController.Builder(application, sessionToken).buildAsync()
 
-        // Используем ContextCompat.getMainExecutor для слушателя
         controllerFuture?.addListener({
             controller = controllerFuture?.get()
             setupControllerListener()
@@ -55,13 +56,22 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 _playerState.update { it.copy(isPlaying = isPlaying) }
             }
 
+            // Отслеживаем смену трека (как ручную, так и автоматическую)
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                val index = controller?.currentMediaItemIndex ?: 0
-                val track = _playerState.value.queue.getOrNull(index)
-                _playerState.update { it.copy(currentTrack = track) }
+                super.onMediaItemTransition(mediaItem, reason)
+                updateCurrentTrack()
+            }
+
+            // На всякий случай дублируем проверку при любых событиях плеера
+            override fun onEvents(player: Player, events: Player.Events) {
+                super.onEvents(player, events)
+                if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION) || events.contains(Player.EVENT_TIMELINE_CHANGED)) {
+                    updateCurrentTrack()
+                }
             }
         })
 
+        // Постоянное обновление позиции
         viewModelScope.launch {
             while (true) {
                 controller?.let { _currentPosition.value = it.currentPosition }
@@ -70,12 +80,40 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    private fun updateCurrentTrack() {
+        val index = controller?.currentMediaItemIndex ?: 0
+        val track = _playerState.value.queue.getOrNull(index)
+        if (track != null && track.id != _playerState.value.currentTrack?.id) {
+            _playerState.update { it.copy(currentTrack = track) }
+        }
+    }
+
     fun playTrack(track: UiTrack, allTracks: List<UiTrack>) {
         val startIndex = allTracks.indexOfFirst { it.id == track.id }.coerceAtLeast(0)
         _playerState.update { it.copy(queue = allTracks, currentTrack = track) }
 
+        // Формируем правильные MediaItem с метаданными для уведомления
+        val mediaItems = allTracks.map { uiTrack ->
+            val metadataBuilder = MediaMetadata.Builder()
+                .setTitle(uiTrack.title)
+                .setArtist(uiTrack.artistName)
+                .setIsPlayable(true)
+                .setIsBrowsable(false)
+
+            // Добавляем обложку, если она есть
+            uiTrack.coverPath?.let { path ->
+                metadataBuilder.setArtworkUri(Uri.fromFile(File(path)))
+            }
+
+            MediaItem.Builder()
+                .setUri(uiTrack.path)
+                .setMediaId(uiTrack.id.toString())
+                .setMediaMetadata(metadataBuilder.build())
+                .build()
+        }
+
         controller?.apply {
-            setMediaItems(allTracks.map { MediaItem.fromUri(it.path) })
+            setMediaItems(mediaItems)
             seekTo(startIndex, 0L)
             prepare()
             play()

@@ -1,7 +1,7 @@
 package com.example.ntm.playback
 
-import android.content.Intent
-import androidx.media3.common.Player
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -11,7 +11,18 @@ class PlaybackService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
-        val player = ExoPlayer.Builder(this).build()
+
+        // Настраиваем аудио-атрибуты (чтобы система понимала, что это музыка)
+        val audioAttributes = AudioAttributes.Builder()
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .setUsage(C.USAGE_MEDIA)
+            .build()
+
+        val player = ExoPlayer.Builder(this)
+            .setAudioAttributes(audioAttributes, true) // true = автоматическая обработка аудио-фокуса
+            .setHandleAudioBecomingNoisy(true) // пауза при отключении наушников
+            .build()
+
         mediaSession = MediaSession.Builder(this, player).build()
     }
 
