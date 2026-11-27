@@ -1,6 +1,5 @@
 package com.example.ntm.activity
 
-import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,30 +17,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.ntm.R
-import com.example.ntm.data.Artist
 import com.example.ntm.data.HomeCategory
 import com.example.ntm.data.toUiTrack
-import com.example.ntm.db.entity.TrackEntity
 import com.example.ntm.db.entity.TrackWithCover
 import com.example.ntm.navigation.Destination
-import com.example.ntm.ui.theme.NtmTheme
 import com.example.ntm.ui.viewmodel.MainViewModel
 import com.example.ntm.ui.viewmodel.PlayerViewModel
 import com.example.ntm.utils.PermissionUtils
-import kotlinx.coroutines.launch
-import java.io.File
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun HomeScreen(
@@ -53,37 +46,25 @@ fun HomeScreen(
     val context = LocalContext.current
     val tracks by viewModel.tracksWithCovers.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
-    val scope = rememberCoroutineScope()
 
-    // 1. Логика запроса разрешений
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        if (isGranted) {
-            viewModel.scanMusic()
-        } else {
-            Toast.makeText(context, "Без разрешения на чтение музыки сканирование невозможно", Toast.LENGTH_LONG).show()
-        }
+        if (isGranted) viewModel.scanMusic()
+        else Toast.makeText(context, "Без разрешения на чтение музыки сканирование невозможно", Toast.LENGTH_LONG).show()
     }
 
-    // 2. Автоматический запуск при первом старте
     LaunchedEffect(Unit) {
         if (PermissionUtils.hasAudioPermission(context)) {
-            if (viewModel.isLibraryEmpty()) {
-                viewModel.scanMusic()
-            }
+            if (viewModel.isLibraryEmpty()) viewModel.scanMusic()
         } else {
             permissionLauncher.launch(PermissionUtils.getAudioPermission())
         }
     }
 
-    // 3. Обработчик ручного нажатия на кнопку "Обновить"
     val onRefreshClick = {
-        if (PermissionUtils.hasAudioPermission(context)) {
-            viewModel.scanMusic()
-        } else {
-            permissionLauncher.launch(PermissionUtils.getAudioPermission())
-        }
+        if (PermissionUtils.hasAudioPermission(context)) viewModel.scanMusic()
+        else permissionLauncher.launch(PermissionUtils.getAudioPermission())
     }
 
     val categories = listOf(
@@ -103,13 +84,7 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    stringResource(R.string.my_tracks),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-
+                Text(stringResource(R.string.my_tracks), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 if (isScanning) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                 } else {
@@ -128,10 +103,7 @@ fun HomeScreen(
                 }.padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
                     Icon(category.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 }
                 Spacer(modifier = Modifier.width(16.dp))
@@ -143,10 +115,7 @@ fun HomeScreen(
 
         if (tracks.isEmpty() && !isScanning) {
             item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Outlined.MusicNote, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.surfaceVariant)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Музыка не найдена", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
@@ -155,7 +124,8 @@ fun HomeScreen(
             }
         }
 
-        items(tracks) { trackWithCover ->
+        // ВАЖНО: Добавлен key = { it.track.id } для оптимизации
+        items(tracks, key = { it.track.id }) { trackWithCover ->
             TrackItem(trackWithCover) {
                 playerViewModel.playTrack(
                     track = trackWithCover.toUiTrack(),
@@ -167,57 +137,44 @@ fun HomeScreen(
     }
 }
 
+
+
 @Composable
 fun TrackItem(trackWithCover: TrackWithCover, onClick: () -> Unit) {
+    val context = LocalContext.current
     val track = trackWithCover.track
     val artistName = trackWithCover.artist?.name ?: "Неизвестный исполнитель"
-
-    // Проверяем валидность файла обложки
-    val coverFile = trackWithCover.cover?.path?.let { File(it) }
-    val hasValidCover = coverFile != null && coverFile.exists() && coverFile.length() > 0
+    val coverPath = trackWithCover.cover?.path
 
     Row(
         modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (hasValidCover) {
-            AsyncImage(
-                model = coverFile,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Default.MusicNote,
+        Box(
+            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            if (coverPath != null) {
+                AsyncImage(
+                    // ИСПОЛЬЗУЕМ ImageRequest с указанием размера
+                    model = ImageRequest.Builder(context)
+                        .data(coverPath)
+                        .size(128.dp.value.toInt()) // Уменьшаем картинку при загрузке
+                        .crossfade(true)
+                        .build(),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
+            } else {
+                Icon(Icons.Default.MusicNote, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
         }
 
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = track.title,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = artistName,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Text(track.title, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(artistName, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Icon(Icons.Default.MoreVert, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }

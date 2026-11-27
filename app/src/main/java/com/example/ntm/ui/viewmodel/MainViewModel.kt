@@ -7,6 +7,7 @@ import com.example.ntm.data.MediaScanner
 import com.example.ntm.db.AppDatabase
 import com.example.ntm.db.entity.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -19,9 +20,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         db.coverDao(), db.scanPathDao(), db.excludedPathDao()
     )
 
-    val tracks = db.trackDao().getAllTracks().stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
+    // Добавляем .debounce(500) и импорт FlowPreview
+    @OptIn(FlowPreview::class)
     val tracksWithCovers = db.trackDao().getAllTracksWithCover()
+        .debounce(500)
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val scanPaths = db.scanPathDao().getAllPaths().stateIn(viewModelScope, SharingStarted.Lazily, emptyList())

@@ -53,25 +53,26 @@ fun QueueScreen(navController: NavHostController? = null, viewModel: PlayerViewM
                     Text("Очередь пуста", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
+                // ВАЖНО: Добавлен key = { it.id }
                 LazyColumn {
-                    items(queue) { track ->
+                    items(queue, key = { it.id }) { track ->
                         val isCurrent = track.id == playerState.currentTrack?.id
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (track.coverPath != null && File(track.coverPath).exists()) {
-                                AsyncImage(
-                                    model = File(track.coverPath),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
-                                    contentAlignment = Alignment.Center
-                                ) {
+                            Box(
+                                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (track.coverPath != null) {
+                                    AsyncImage(
+                                        model = File(track.coverPath),
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
                                     Icon(Icons.Default.MusicNote, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                 }
                             }
