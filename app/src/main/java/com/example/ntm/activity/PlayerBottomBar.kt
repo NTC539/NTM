@@ -29,7 +29,14 @@ fun PlayerBottomBar(
     ) {
         NavigationBarItem(
             selected = currentRoute == Destination.Route.PLAYER,
-            onClick = {},
+            onClick = {
+                if (currentRoute != Destination.Route.PLAYER) {
+                    navController?.navigate(Destination.Route.PLAYER) {
+                        popUpTo(Destination.Route.PLAYER) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            },
             icon = {
                 Icon(
                     imageVector = if (currentRoute == Destination.Route.PLAYER) Icons.Filled.PlayCircle else Icons.Outlined.PlayCircle,
@@ -40,7 +47,14 @@ fun PlayerBottomBar(
         )
         NavigationBarItem(
             selected = currentRoute == Destination.Route.QUEUE,
-            onClick = {},
+            onClick = {
+                if (currentRoute != Destination.Route.QUEUE) {
+                    navController?.navigate(Destination.Route.QUEUE) {
+                        popUpTo(Destination.Route.PLAYER)
+                        launchSingleTop = true
+                    }
+                }
+            },
             icon = {
                 Icon(
                     imageVector = if (currentRoute == Destination.Route.QUEUE) Icons.AutoMirrored.Filled.QueueMusic else Icons.AutoMirrored.Outlined.QueueMusic,
@@ -51,7 +65,14 @@ fun PlayerBottomBar(
         )
         NavigationBarItem(
             selected = currentRoute == Destination.Route.LYRICS,
-            onClick = {},
+            onClick = {
+                if (currentRoute != Destination.Route.LYRICS) {
+                    navController?.navigate(Destination.Route.LYRICS) {
+                        popUpTo(Destination.Route.PLAYER)
+                        launchSingleTop = true
+                    }
+                }
+            },
             icon = {
                 Icon(
                     imageVector = if (currentRoute == Destination.Route.LYRICS) Icons.Filled.Subject else Icons.Outlined.Subject,

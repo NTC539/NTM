@@ -1,18 +1,24 @@
 package com.example.ntm.ui.viewmodel
 
 import android.app.Application
+import android.content.ComponentName
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import com.example.ntm.data.UiTrack
+import com.example.ntm.playback.PlaybackService
+import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+// ВАЖНО: Класс PlayerState должен быть здесь
 data class PlayerState(
     val currentTrack: UiTrack? = null,
     val queue: List<UiTrack> = emptyList(),
@@ -20,7 +26,8 @@ data class PlayerState(
 )
 
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
-    val exoPlayer: ExoPlayer = ExoPlayer.Builder(application).build()
+    private var controllerFuture: ListenableFuture<MediaController>? = null
+    private var controller: MediaController? = null
 
     private val _playerState = MutableStateFlow(PlayerState())
     val playerState = _playerState.asStateFlow()
@@ -29,24 +36,35 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     val currentPosition = _currentPosition.asStateFlow()
 
     init {
-        exoPlayer.addListener(object : Player.Listener {
+        val sessionToken = SessionToken(
+            application,
+            ComponentName(application, PlaybackService::class.java)
+        )
+        controllerFuture = MediaController.Builder(application, sessionToken).buildAsync()
+
+        // Используем ContextCompat.getMainExecutor для слушателя
+        controllerFuture?.addListener({
+            controller = controllerFuture?.get()
+            setupControllerListener()
+        }, ContextCompat.getMainExecutor(application))
+    }
+
+    private fun setupControllerListener() {
+        controller?.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 _playerState.update { it.copy(isPlaying = isPlaying) }
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                val index = exoPlayer.currentMediaItemIndex
+                val index = controller?.currentMediaItemIndex ?: 0
                 val track = _playerState.value.queue.getOrNull(index)
                 _playerState.update { it.copy(currentTrack = track) }
             }
         })
 
-        // Постоянное обновление позиции для слайдера
         viewModelScope.launch {
             while (true) {
-                if (exoPlayer.isPlaying) {
-                    _currentPosition.value = exoPlayer.currentPosition
-                }
+                controller?.let { _currentPosition.value = it.currentPosition }
                 delay(500)
             }
         }
@@ -54,33 +72,33 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun playTrack(track: UiTrack, allTracks: List<UiTrack>) {
         val startIndex = allTracks.indexOfFirst { it.id == track.id }.coerceAtLeast(0)
-
         _playerState.update { it.copy(queue = allTracks, currentTrack = track) }
 
-        // Загружаем треки в ExoPlayer. ExoPlayer умеет читать локальные пути (file://)
-        exoPlayer.setMediaItems(allTracks.map { MediaItem.fromUri(it.path) })
-        exoPlayer.seekTo(startIndex, 0L)
-        exoPlayer.prepare()
-        exoPlayer.play()
+        controller?.apply {
+            setMediaItems(allTracks.map { MediaItem.fromUri(it.path) })
+            seekTo(startIndex, 0L)
+            prepare()
+            play()
+        }
     }
 
     fun togglePlayPause() {
-        if (exoPlayer.isPlaying) exoPlayer.pause() else exoPlayer.play()
+        controller?.let { if (it.isPlaying) it.pause() else it.play() }
     }
 
-    fun playNext() { if (exoPlayer.hasNextMediaItem()) exoPlayer.seekToNext() }
-    fun playPrevious() { if (exoPlayer.hasPreviousMediaItem()) exoPlayer.seekToPrevious() }
-    fun seekTo(positionMs: Long) { exoPlayer.seekTo(positionMs) }
-    fun getDuration() = if (exoPlayer.duration > 0) exoPlayer.duration else 0L
+    fun playNext() { controller?.seekToNextMediaItem() }
+    fun playPrevious() { controller?.seekToPreviousMediaItem() }
+    fun seekTo(positionMs: Long) { controller?.seekTo(positionMs) }
+    fun getDuration() = controller?.duration?.takeIf { it > 0 } ?: 0L
 
     fun stopAndClear() {
-        exoPlayer.stop()
-        exoPlayer.clearMediaItems()
+        controller?.stop()
+        controller?.clearMediaItems()
         _playerState.update { PlayerState() }
     }
 
     override fun onCleared() {
         super.onCleared()
-        exoPlayer.release()
+        controllerFuture?.let { MediaController.releaseFuture(it) }
     }
 }

@@ -38,7 +38,7 @@ fun AppNavHost(
             QueueScreen(navController, playerViewModel)
         }
         composable(Destination.Route.LYRICS) {
-            LyricsScreen(navController, Track("", "", "", 0))
+            LyricsScreen(navController, playerViewModel)
         }
         composable(Destination.Route.PLAYLISTS) {
             PlaylistsScreen(navController, emptyList())
