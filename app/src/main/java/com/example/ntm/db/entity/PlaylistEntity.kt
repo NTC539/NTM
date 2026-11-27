@@ -15,7 +15,8 @@ import androidx.room.PrimaryKey
 data class PlaylistEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val cover_id: Long?,
+    val cover_id: Long? = null,
+    val cover_type: Int = 0, // 0 = LAST_TRACK, 1 = FOUR_TRACKS, 2 = CUSTOM
     val created_at: Long = System.currentTimeMillis(),
     val updated_at: Long = System.currentTimeMillis()
 )

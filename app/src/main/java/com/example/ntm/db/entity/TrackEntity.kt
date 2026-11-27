@@ -16,6 +16,7 @@ import androidx.room.PrimaryKey
         Index(value = ["path"], unique = true),
         Index("artist_id"),
         Index("album_id"),
+        Index("cover_id"), // <--- ДОБАВЛЕНО
         Index("title")
     ]
 )

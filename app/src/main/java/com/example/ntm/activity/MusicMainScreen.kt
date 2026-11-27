@@ -15,11 +15,13 @@ import com.example.ntm.navigation.AppNavHost
 import com.example.ntm.navigation.Destination
 import com.example.ntm.ui.viewmodel.MainViewModel
 import com.example.ntm.ui.viewmodel.PlayerViewModel
+import com.example.ntm.ui.viewmodel.PlaylistViewModel
 
 @Composable
 fun MusicMainScreen() {
     val mainViewModel: MainViewModel = viewModel()
     val playerViewModel: PlayerViewModel = viewModel()
+    val playlistViewModel: PlaylistViewModel = viewModel()
 
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -51,6 +53,7 @@ fun MusicMainScreen() {
             navController = navController,
             mainViewModel = mainViewModel,
             playerViewModel = playerViewModel,
+            playlistViewModel = playlistViewModel,
             modifier = Modifier.padding(innerPadding)
         )
     }

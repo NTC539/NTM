@@ -23,7 +23,7 @@ import com.example.ntm.db.entity.*
         ExcludedPathEntity::class,
         ScanPathEntity::class
     ],
-    version = 2, // Увеличили версию, так как изменили структуру
+    version = 3, // Увеличили версию, так как изменили структуру
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,6 +34,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun coverDao(): CoverDao
     abstract fun scanPathDao(): ScanPathDao
     abstract fun excludedPathDao(): ExcludedPathDao
+
+    abstract fun playlistDao(): PlaylistDao
 
     companion object {
         @Volatile

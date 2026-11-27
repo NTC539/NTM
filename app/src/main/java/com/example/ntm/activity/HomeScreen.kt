@@ -128,8 +128,8 @@ fun HomeScreen(
         items(tracks, key = { it.track.id }) { trackWithCover ->
             TrackItem(trackWithCover) {
                 playerViewModel.playTrack(
-                    track = trackWithCover.toUiTrack(),
-                    allTracks = tracks.map { it.toUiTrack() }
+                    selectedTrack = trackWithCover.toUiTrack(),
+                    rawTracks = tracks // Передаем весь список как есть
                 )
                 navController?.navigate(Destination.Route.PLAYER)
             }

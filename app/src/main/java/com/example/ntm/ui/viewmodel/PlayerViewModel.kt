@@ -18,7 +18,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import com.example.ntm.db.entity.TrackWithCover
+import com.example.ntm.data.toUiTrack
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 data class PlayerState(
@@ -88,35 +92,39 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun playTrack(track: UiTrack, allTracks: List<UiTrack>) {
-        val startIndex = allTracks.indexOfFirst { it.id == track.id }.coerceAtLeast(0)
-        _playerState.update { it.copy(queue = allTracks, currentTrack = track) }
+    fun playTrack(selectedTrack: UiTrack, rawTracks: List<TrackWithCover>) {
+        viewModelScope.launch(Dispatchers.Default) { // Уходим в фоновый поток
+            val allUiTracks = rawTracks.map { it.toUiTrack() }
+            val startIndex = allUiTracks.indexOfFirst { it.id == selectedTrack.id }.coerceAtLeast(0)
 
-        // Формируем правильные MediaItem с метаданными для уведомления
-        val mediaItems = allTracks.map { uiTrack ->
-            val metadataBuilder = MediaMetadata.Builder()
-                .setTitle(uiTrack.title)
-                .setArtist(uiTrack.artistName)
-                .setIsPlayable(true)
-                .setIsBrowsable(false)
+            _playerState.update { it.copy(queue = allUiTracks, currentTrack = selectedTrack) }
 
-            // Добавляем обложку, если она есть
-            uiTrack.coverPath?.let { path ->
-                metadataBuilder.setArtworkUri(Uri.fromFile(File(path)))
+            withContext(Dispatchers.Main) {
+                val mediaItems = allUiTracks.map { uiTrack ->
+                    val metadataBuilder = MediaMetadata.Builder()
+                        .setTitle(uiTrack.title)
+                        .setArtist(uiTrack.artistName)
+                        .setIsPlayable(true)
+                        .setIsBrowsable(false)
+
+                    uiTrack.coverPath?.let { path ->
+                        metadataBuilder.setArtworkUri(Uri.fromFile(File(path)))
+                    }
+
+                    MediaItem.Builder()
+                        .setUri(uiTrack.path)
+                        .setMediaId(uiTrack.id.toString())
+                        .setMediaMetadata(metadataBuilder.build())
+                        .build()
+                }
+
+                controller?.apply {
+                    setMediaItems(mediaItems)
+                    seekTo(startIndex, 0L)
+                    prepare()
+                    play()
+                }
             }
-
-            MediaItem.Builder()
-                .setUri(uiTrack.path)
-                .setMediaId(uiTrack.id.toString())
-                .setMediaMetadata(metadataBuilder.build())
-                .build()
-        }
-
-        controller?.apply {
-            setMediaItems(mediaItems)
-            seekTo(startIndex, 0L)
-            prepare()
-            play()
         }
     }
 

@@ -30,5 +30,6 @@ sealed class Destination(
         const val LYRICS = "lyrics"
         const val PLAYLISTS = "playlists"
         const val ARTISTS = "artists"
+        const val PLAYLIST_DETAIL = "playlist_detail"
     }
 }
