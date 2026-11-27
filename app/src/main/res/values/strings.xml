@@ -1,0 +1,82 @@
+<resources>
+    <string name="app_name">NTM</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_playlists">Playlists</string>
+    <string name="nav_artists">Artists</string>
+
+    <!-- Home Screen -->
+    <string name="search_in_library">Search in library</string>
+    <string name="filter_all">All</string>
+    <string name="filter_tracks">Tracks</string>
+    <string name="filter_albums">Albums</string>
+    <string name="filter_artists">Artists</string>
+    <string name="my_tracks">My tracks</string>
+    <string name="default_sort">by default</string>
+    <string name="category_recent">Recent</string>
+    <string name="category_playlists">Playlists</string>
+    <string name="category_albums">Albums</string>
+    <string name="category_artists">Artists</string>
+    <string name="category_downloaded">Downloaded music</string>
+
+    <!-- Search Screen -->
+    <string name="search_hint">Search</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_appearance_sub">Dark theme, Accent color</string>
+    <string name="settings_scan">Media scanning</string>
+    <string name="settings_scan_sub">Manage paths</string>
+    <string name="settings_sync">PC Sync</string>
+    <string name="settings_sync_sub">Local network settings</string>
+    <string name="settings_storage">Storage and cache</string>
+    <string name="settings_about">About app</string>
+    <string name="settings_about_sub">Version 1.0.0</string>
+
+    <!-- Player -->
+    <string name="player_now_playing">Now playing</string>
+    <string name="player_my_music">My music</string>
+    <string name="player_close">Close</string>
+    <string name="player_share">Share</string>
+    <string name="player_lyrics">Lyrics</string>
+    <string name="player_queue">Queue</string>
+    <string name="player_more">More</string>
+
+    <string name="player_tab_player">Player</string>
+    <string name="player_tab_queue">Queue</string>
+    <string name="player_tab_lyrics">Lyrics</string>
+
+    <string name="lyrics_title">Lyrics</string>
+    <string name="lyrics_placeholder">Song lyrics loaded from Genius API will be displayed here...</string>
+
+    <!-- Queue -->
+    <string name="queue_next">Next up</string>
+
+    <!-- Common -->
+    <string name="artists_title">Artists</string>
+    <string name="playlists_title">Playlists</string>
+    <string name="btn_back">Back</string>
+
+    <!-- Mini Player -->
+    <string name="mini_player_play">Play</string>
+    <string name="mini_player_pause">Pause</string>
+    <string name="mini_player_close">Close</string>
+
+    <string name="settings_storage_title">Storage and cache</string>
+
+    <string name="settings_clear_db">Clear media library</string>
+    <string name="settings_clear_db_sub">Delete all tracks, playlists, and cover cache</string>
+    <string name="dialog_clear_db_title">Clear media library?</string>
+    <string name="dialog_clear_db_message">All data about tracks, playlists, and scan settings will be deleted. Audio files on your device will remain untouched.</string>
+    <string name="btn_clear">Clear</string>
+    <string name="btn_cancel">Cancel</string>
+
+    <plurals name="track_count">
+        <item quantity="one">%d track</item>
+        <item quantity="other">%d tracks</item>
+    </plurals>
+</resources>

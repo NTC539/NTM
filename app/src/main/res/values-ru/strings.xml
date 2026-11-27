@@ -1,0 +1,79 @@
+<resources>
+    <string name="app_name">NTM</string>
+
+    <!-- Навигация -->
+    <string name="nav_home">Главная</string>
+    <string name="nav_search">Поиск</string>
+    <string name="nav_settings">Настройки</string>
+    <string name="nav_playlists">Плейлисты</string>
+    <string name="nav_artists">Артисты</string>
+
+    <!-- Главный экран -->
+    <string name="search_in_library">Поиск в библиотеке</string>
+    <string name="filter_all">Все</string>
+    <string name="filter_tracks">Треки</string>
+    <string name="filter_albums">Альбомы</string>
+    <string name="filter_artists">Исполнители</string>
+    <string name="my_tracks">Мои треки</string>
+    <string name="default_sort">по умолчанию</string>
+    <string name="category_recent">Недавнее</string>
+    <string name="category_playlists">Плейлисты</string>
+    <string name="category_albums">Альбомы</string>
+    <string name="category_artists">Артисты</string>
+    <string name="category_downloaded">Скачанная музыка</string>
+
+    <!-- Экран поиска -->
+    <string name="search_hint">Поиск</string>
+
+    <!-- Настройки -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_appearance">Внешний вид</string>
+    <string name="settings_appearance_sub">Темная тема, Акцентный цвет</string>
+    <string name="settings_scan">Сканирование медиатеки</string>
+    <string name="settings_scan_sub">Управление путями</string>
+    <string name="settings_sync">Синхронизация с ПК</string>
+    <string name="settings_sync_sub">Настройки локальной сети</string>
+    <string name="settings_storage">Хранилище и кэш</string>
+    <string name="settings_about">О приложении</string>
+    <string name="settings_about_sub">Версия 1.0.0</string>
+
+    <!-- Плеер -->
+    <string name="player_now_playing">Сейчас играет</string>
+    <string name="player_my_music">Моя музыка</string>
+    <string name="player_close">Закрыть</string>
+    <string name="player_share">Поделиться</string>
+    <string name="player_lyrics">Текст песни</string>
+    <string name="player_queue">Очередь</string>
+    <string name="player_more">Еще</string>
+
+    <string name="player_tab_player">Плеер</string>
+    <string name="player_tab_queue">Очередь</string>
+    <string name="player_tab_lyrics">Текст</string>
+
+    <string name="lyrics_title">Текст песни</string>
+    <string name="lyrics_placeholder">Здесь будет отображаться текст песни, загруженный из Genius API...</string>
+
+    <!-- Очередь -->
+    <string name="queue_next">Далее</string>
+
+    <!-- Общие -->
+    <string name="artists_title">Артисты</string>
+    <string name="playlists_title">Плейлисты</string>
+    <string name="btn_back">Назад</string>
+
+    <string name="settings_clear_db">Очистить медиатеку</string>
+    <string name="settings_clear_db_sub">Удалить все треки, плейлисты и кэш обложек</string>
+    <string name="dialog_clear_db_title">Очистить медиатеку?</string>
+    <string name="dialog_clear_db_message">Все данные о треках, плейлистах и настройках сканирования будут удалены. Сами аудиофайлы на устройстве останутся на месте.</string>
+    <string name="btn_clear">Очистить</string>
+    <string name="btn_cancel">Отмена</string>
+
+    <string name="settings_storage_title">Хранилище и кэш</string>
+
+    <plurals name="track_count">
+        <item quantity="one">%d трек</item>
+        <item quantity="few">%d трека</item>
+        <item quantity="many">%d треков</item>
+        <item quantity="other">%d трека</item>
+    </plurals>
+</resources>
