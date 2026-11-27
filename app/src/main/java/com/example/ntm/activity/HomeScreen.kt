@@ -32,11 +32,13 @@ import coil.compose.AsyncImage
 import com.example.ntm.R
 import com.example.ntm.data.Artist
 import com.example.ntm.data.HomeCategory
+import com.example.ntm.data.toUiTrack
 import com.example.ntm.db.entity.TrackEntity
 import com.example.ntm.db.entity.TrackWithCover
 import com.example.ntm.navigation.Destination
 import com.example.ntm.ui.theme.NtmTheme
 import com.example.ntm.ui.viewmodel.MainViewModel
+import com.example.ntm.ui.viewmodel.PlayerViewModel
 import com.example.ntm.utils.PermissionUtils
 import kotlinx.coroutines.launch
 import java.io.File
@@ -45,6 +47,7 @@ import java.io.File
 fun HomeScreen(
     navController: NavHostController? = null,
     viewModel: MainViewModel,
+    playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -152,8 +155,14 @@ fun HomeScreen(
             }
         }
 
-        items(tracks) { track ->
-            TrackItem(track) { navController?.navigate(Destination.Route.PLAYER) }
+        items(tracks) { trackWithCover ->
+            TrackItem(trackWithCover) {
+                playerViewModel.playTrack(
+                    track = trackWithCover.toUiTrack(),
+                    allTracks = tracks.map { it.toUiTrack() }
+                )
+                navController?.navigate(Destination.Route.PLAYER)
+            }
         }
     }
 }

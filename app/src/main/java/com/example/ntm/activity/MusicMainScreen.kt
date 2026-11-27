@@ -3,11 +3,6 @@ package com.example.ntm.activity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Album
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.QueueMusic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -16,17 +11,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.ntm.R
-import com.example.ntm.data.HomeCategory
-import com.example.ntm.data.Track
 import com.example.ntm.navigation.AppNavHost
 import com.example.ntm.navigation.Destination
 import com.example.ntm.ui.viewmodel.MainViewModel
+import com.example.ntm.ui.viewmodel.PlayerViewModel
 
 @Composable
 fun MusicMainScreen() {
-    // 1. Инициализируем ViewModel
     val mainViewModel: MainViewModel = viewModel()
+    val playerViewModel: PlayerViewModel = viewModel()
 
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -36,18 +29,16 @@ fun MusicMainScreen() {
             currentRoute == Destination.Route.QUEUE ||
             currentRoute == Destination.Route.LYRICS
 
-    // В будущем: эти данные будут браться из ViewModel (состояние ExoPlayer)
-    var currentTrack by remember { mutableStateOf<Track?>(Track("Километры", "Wildways", "03:23", R.drawable.kosmos)) }
-    var isPlaying by remember { mutableStateOf(true) }
+    val playerState by playerViewModel.playerState.collectAsState()
 
     MusicMainScreenContent(
         currentRoute = currentRoute,
         showBottomBar = !isPlayerScreen,
-        currentTrack = currentTrack,
-        isPlaying = isPlaying,
+        currentTrack = playerState.currentTrack,
+        isPlaying = playerState.isPlaying,
         onMiniPlayerClick = { navController.navigate(Destination.Route.PLAYER) },
-        onPlayPauseClick = { isPlaying = !isPlaying }, // Теперь кнопка работает
-        onCloseClick = { currentTrack = null },        // Закрываем мини-плеер
+        onPlayPauseClick = { playerViewModel.togglePlayPause() },
+        onCloseClick = { playerViewModel.stopAndClear() },
         onNavigate = { route ->
             navController.navigate(route) {
                 popUpTo(navController.graph.startDestinationId) { saveState = true }
@@ -58,7 +49,8 @@ fun MusicMainScreen() {
     ) { innerPadding ->
         AppNavHost(
             navController = navController,
-            mainViewModel = mainViewModel, // 2. Передаем ViewModel в навигацию
+            mainViewModel = mainViewModel,
+            playerViewModel = playerViewModel,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -68,11 +60,11 @@ fun MusicMainScreen() {
 fun MusicMainScreenContent(
     currentRoute: String?,
     showBottomBar: Boolean,
-    currentTrack: Track?,
+    currentTrack: com.example.ntm.data.UiTrack?, // Изменили тип
     isPlaying: Boolean,
     onMiniPlayerClick: () -> Unit,
     onPlayPauseClick: () -> Unit,
-    onCloseClick: () -> Unit, // 3. Добавлен параметр
+    onCloseClick: () -> Unit,
     onNavigate: (String) -> Unit,
     content: @Composable (PaddingValues) -> Unit
 ) {
@@ -91,7 +83,6 @@ fun MusicMainScreenContent(
                             onCloseClick = onCloseClick
                         )
                     }
-
                     NavigationBar(
                         containerColor = MaterialTheme.colorScheme.background,
                         tonalElevation = 0.dp
@@ -118,21 +109,3 @@ fun MusicMainScreenContent(
         content(innerPadding)
     }
 }
-
-// --- Моки для Preview оставлены ---
-val mockCategories = listOf(
-    HomeCategory(R.string.category_recent, Icons.Outlined.History),
-    HomeCategory(R.string.category_playlists, Icons.Outlined.QueueMusic),
-    HomeCategory(R.string.category_albums, Icons.Outlined.Album),
-    HomeCategory(R.string.category_artists, Icons.Outlined.Person),
-)
-val mockTracks = listOf(
-    Track("Невыносимого нет", "ЖЩ", "3:18", R.drawable.nevinosimgonet),
-    Track("Хуже, чем вчера", "ЖЩ", "4:11", R.drawable.pustota),
-    Track("Жить по-другому", "ЖЩ", "3:25", R.drawable.pustota),
-    Track("космос", "наше последнее лето", "2:17", R.drawable.kosmos),
-    Track("увидимся снова", "наше последнее лето", "1:58", R.drawable.uvidimsasnova),
-    Track("Холода", "Mellsher, СТИНТ", "2:35", R.drawable.holoda),
-    Track("X", "Mellsher", "2:30", R.drawable.x)
-)
-private val mockMiniTrack = Track("космос", "наше последнее лето", "03:23", R.drawable.kosmos)

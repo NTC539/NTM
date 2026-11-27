@@ -28,7 +28,6 @@ import com.example.ntm.R
 import com.example.ntm.ui.viewmodel.MainViewModel
 import com.example.ntm.utils.PathUtils
 
-// Перечисление для категорий
 enum class SettingsCategory {
     MAIN, STORAGE
 }
@@ -38,10 +37,8 @@ fun SettingsScreen(
     viewModel: MainViewModel,
     modifier: Modifier = Modifier
 ) {
-    // Храним текущую открытую категорию (по умолчанию - главный экран)
     var currentCategory by remember { mutableStateOf(SettingsCategory.MAIN) }
 
-    // В зависимости от выбранной категории показываем нужный контент
     when (currentCategory) {
         SettingsCategory.MAIN -> {
             SettingsMainContent(
@@ -57,18 +54,15 @@ fun SettingsScreen(
     }
 }
 
-// ==========================================
-// 1. ГЛАВНЫЙ ЭКРАН НАСТРОЕК
-// ==========================================
 @Composable
 private fun SettingsMainContent(
     onCategoryClick: (SettingsCategory) -> Unit
 ) {
     val options = listOf(
-        SettingsOption(R.string.settings_appearance, Icons.Outlined.Palette) { /* Открыть внешний вид */ },
+        SettingsOption(R.string.settings_appearance, Icons.Outlined.Palette) {  },
         SettingsOption(R.string.settings_storage_title, Icons.Outlined.Storage) { onCategoryClick(SettingsCategory.STORAGE) },
-        SettingsOption(R.string.settings_sync, Icons.Outlined.Sync) { /* Открыть синхронизацию */ },
-        SettingsOption(R.string.settings_about, Icons.Outlined.Info) { /* Открыть "О приложении" */ }
+        SettingsOption(R.string.settings_sync, Icons.Outlined.Sync) {  },
+        SettingsOption(R.string.settings_about, Icons.Outlined.Info) {  }
     )
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -108,9 +102,6 @@ private fun SettingsMainContent(
     }
 }
 
-// ==========================================
-// 2. ЭКРАН ХРАНИЛИЩА (Внутри настроек)
-// ==========================================
 @Composable
 private fun StorageSettingsContent(
     viewModel: MainViewModel,
@@ -218,9 +209,6 @@ private fun StorageSettingsContent(
     }
 }
 
-// ==========================================
-// ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ
-// ==========================================
 data class SettingsOption(
     val titleResId: Int,
     val icon: ImageVector,

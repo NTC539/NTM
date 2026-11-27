@@ -8,11 +8,13 @@ import androidx.navigation.compose.composable
 import com.example.ntm.activity.*
 import com.example.ntm.data.Track
 import com.example.ntm.ui.viewmodel.MainViewModel
+import com.example.ntm.ui.viewmodel.PlayerViewModel
 
 @Composable
 fun AppNavHost(
     navController: NavHostController,
     mainViewModel: MainViewModel,
+    playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -21,7 +23,7 @@ fun AppNavHost(
         modifier = modifier
     ) {
         composable(Destination.Home.route) {
-            HomeScreen(navController, mainViewModel)
+            HomeScreen(navController, mainViewModel, playerViewModel)
         }
         composable(Destination.Search.route) {
             SearchScreen("", emptyList(), emptyList(), emptyList())
@@ -30,10 +32,10 @@ fun AppNavHost(
             SettingsScreen(mainViewModel)
         }
         composable(Destination.Route.PLAYER) {
-            PlayerScreen(navController, Track("", "", "", 0))
+            PlayerScreen(navController, playerViewModel)
         }
         composable(Destination.Route.QUEUE) {
-            QueueScreen(navController, emptyList())
+            QueueScreen(navController, playerViewModel)
         }
         composable(Destination.Route.LYRICS) {
             LyricsScreen(navController, Track("", "", "", 0))

@@ -1,7 +1,7 @@
 package com.example.ntm.activity
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,136 +9,129 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.example.ntm.R
-import com.example.ntm.data.Track
 import com.example.ntm.navigation.Destination
-import com.example.ntm.ui.theme.NtmTheme
+import com.example.ntm.ui.viewmodel.PlayerViewModel
+import java.io.File
 
 @Composable
-fun PlayerScreen(navController: NavHostController? = null, track: Track) {
-    Scaffold(
-        bottomBar = {
-            PlayerBottomBar(
-                navController = navController,
-                currentRoute = Destination.Route.PLAYER
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { navController?.popBackStack() }) {
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = stringResource(R.string.player_close), tint = MaterialTheme.colorScheme.onBackground)
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.player_now_playing), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                    Text(stringResource(R.string.player_my_music), color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
-                }
-                IconButton(onClick = { }) {
-                    Icon(Icons.Default.Share, contentDescription = stringResource(R.string.player_share), tint = MaterialTheme.colorScheme.onBackground)
-                }
+fun PlayerScreen(navController: NavHostController? = null, viewModel: PlayerViewModel) {
+    val playerState by viewModel.playerState.collectAsState()
+    val currentPosition by viewModel.currentPosition.collectAsState()
+    val track = playerState.currentTrack
+
+    if (track == null) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+            Text("Ничего не играет", color = MaterialTheme.colorScheme.onBackground)
+        }
+        return
+    }
+
+    val duration = viewModel.getDuration()
+    val progress = if (duration > 0) currentPosition.toFloat() / duration.toFloat() else 0f
+
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { navController?.popBackStack() }) {
+                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Close", tint = MaterialTheme.colorScheme.onBackground)
             }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(stringResource(R.string.player_now_playing), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.player_my_music), color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+            }
+            IconButton(onClick = { }) {
+                Icon(Icons.Default.Share, contentDescription = "Share", tint = MaterialTheme.colorScheme.onBackground)
+            }
+        }
 
-            Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-            Image(
-                painter = painterResource(id = track.cover),
+        if (track.coverPath != null && File(track.coverPath).exists()) {
+            AsyncImage(
+                model = File(track.coverPath),
                 contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(16.dp)),
+                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(16.dp)),
                 contentScale = ContentScale.Crop
             )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        } else {
+            Box(
+                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
             ) {
-                Column {
-                    Text(track.title, color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text(track.artist, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.titleMedium)
-                }
+                Icon(Icons.Default.MusicNote, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(64.dp))
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-            Slider(
-                value = 0.5f,
-                onValueChange = {},
-                colors = SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.onBackground,
-                    activeTrackColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+        Column {
+            Text(track.title, color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(track.artistName, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Slider(
+            value = progress,
+            onValueChange = { viewModel.seekTo((it * duration).toLong()) },
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.onBackground,
+                activeTrackColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
             )
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("01:42", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                Text(track.duration, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(formatTime(currentPosition), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            Text(formatTime(duration), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { viewModel.playPrevious() }) {
+                Icon(Icons.Default.SkipPrevious, contentDescription = "Prev", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(36.dp))
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+            Box(
+                modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onBackground).clickable { viewModel.togglePlayPause() },
+                contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Repeat, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Icon(Icons.Default.SkipPrevious, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(36.dp))
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onBackground),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = MaterialTheme.colorScheme.background, modifier = Modifier.size(36.dp))
-                }
-                Icon(Icons.Default.SkipNext, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(36.dp))
-                Icon(Icons.Default.Shuffle, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(
+                    imageVector = if (playerState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = "Play/Pause",
+                    tint = MaterialTheme.colorScheme.background,
+                    modifier = Modifier.size(36.dp)
+                )
             }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.Equalizer, contentDescription = "Equalizer", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.player_more), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            IconButton(onClick = { viewModel.playNext() }) {
+                Icon(Icons.Default.SkipNext, contentDescription = "Next", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(36.dp))
             }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Subject, contentDescription = "Lyrics", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Default.QueueMusic, contentDescription = "Queue", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.clickable { navController?.navigate(Destination.Route.QUEUE) })
+            Icon(Icons.Default.MoreVert, contentDescription = "More", tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
-@Preview(showBackground = true)
-@Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun PlayerScreenPreview() {
-    val mockTrack = Track("Холода", "Mellsher, СТИНТ", "2:35", R.drawable.holoda)
-    NtmTheme { PlayerScreen(null, mockTrack) }
+private fun formatTime(ms: Long): String {
+    val totalSeconds = ms / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "%d:%02d".format(minutes, seconds)
 }
